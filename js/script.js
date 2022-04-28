@@ -1,7 +1,11 @@
 'use strict';
 
-const removeActive = document.querySelector('.overlay ');
+const removeActive = document.querySelector('.overlay');
 removeActive.classList.remove('active');
+
+removeActive.addEventListener('click', () =>{
+    removeActive.classList.remove('active');
+});
 
 let goods = [
     {
@@ -101,5 +105,20 @@ const addToBody = element => {
 }
 
 document.querySelector('tbody').innerHTML = '';
+
+const addGodsBtn = document.querySelector('.panel__add-goods');
+addGodsBtn.addEventListener('click', () => {
+    removeActive.classList.add('active');
+});
+
+const modalCloseBtn = document.querySelector('.modal__close');
+modalCloseBtn.addEventListener('click', () => {
+    removeActive.classList.remove('active');
+});
+
+const modal = document.querySelector('.modal');
+modal.addEventListener('click', event => {
+    event.stopImmediatePropagation();
+});
 
 renderGoods(goods);
