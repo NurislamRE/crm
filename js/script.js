@@ -1,10 +1,12 @@
 'use strict';
 
-const removeActive = document.querySelector('.overlay');
-removeActive.classList.remove('active');
+const overlay = document.querySelector('.overlay');
 
-removeActive.addEventListener('click', () =>{
-    removeActive.classList.remove('active');
+overlay.addEventListener('click', e => {
+    const modal = document.querySelector('.modal');
+    if (e.target != modal) {
+        overlay.classList.remove('active');
+    }    
 });
 
 let goods = [
@@ -108,17 +110,26 @@ document.querySelector('tbody').innerHTML = '';
 
 const addGodsBtn = document.querySelector('.panel__add-goods');
 addGodsBtn.addEventListener('click', () => {
-    removeActive.classList.add('active');
-});
-
-const modalCloseBtn = document.querySelector('.modal__close');
-modalCloseBtn.addEventListener('click', () => {
-    removeActive.classList.remove('active');
+    overlay.classList.add('active');
 });
 
 const modal = document.querySelector('.modal');
-modal.addEventListener('click', event => {
-    event.stopImmediatePropagation();
+modal.addEventListener('click', e => {
+    console.log(e.target);
+    if (e.target.closest('.modal__close')) {
+        overlay.classList.remove('active');
+    }
 });
 
 renderGoods(goods);
+
+const btnDel = document.querySelectorAll('.table__btn_del');
+btnDel.forEach(del => {
+    del.addEventListener('click', e => {
+        const currentRow = del.closest('tr');
+        const id = currentRow.children[1].getAttribute('data-id');
+        goods = goods.filter(item => item.id != id);
+        currentRow.remove();
+        console.log(goods);
+    });
+});
