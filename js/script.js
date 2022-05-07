@@ -1,14 +1,5 @@
 'use strict';
 
-const overlay = document.querySelector('.overlay');
-
-overlay.addEventListener('click', e => {
-    const modal = document.querySelector('.modal');
-    if (e.target != modal) {
-        overlay.classList.remove('active');
-    }    
-});
-
 let goods = [
     {
         "id": 1,
@@ -68,68 +59,145 @@ let goods = [
     }
 ];
 
-const createRow = (goodNumber, goodObject) => {
-    const element = `
-  <tr>
-    <td class="table__cell ">${goodNumber}</td>
-    <td class="table__cell table__cell_left table__cell_name" data-id="${goodObject.id}">
-        <span class="table__cell-id">id: ${goodObject.id}</span>${goodObject.name}</td>
-    <td class="table__cell table__cell_left">${goodObject.category}</td>
-    <td class="table__cell">${goodObject.units}</td>
-    <td class="table__cell">${goodObject.count}</td>
-    <td class="table__cell">${goodObject.price}</td>
-    <td class="table__cell">${goodObject.price * goodObject.count}</td>
-    <td class="table__cell table__cell_btn-wrapper">
-        <button class="table__btn table__btn_pic"></button>
-        <button class="table__btn table__btn_edit"></button>
-        <button class="table__btn table__btn_del"></button>
-    </td>
-  </tr>
-    `;
-    return element;
-}
-
-const renderGoods = arrayGoods => {
-
-    const goods = arrayGoods;
-    let goodNumber = 0;
-
-    goods.forEach(goodObject => {
-        goodNumber++;
-        const element = createRow(goodNumber, goodObject);
-        addToBody(element);
-    });
-}
-
-const addToBody = element => {
-    const body =  document.querySelector('tbody');
-    body.insertAdjacentHTML('beforeend', element);
-}
-
-document.querySelector('tbody').innerHTML = '';
-
-const addGodsBtn = document.querySelector('.panel__add-goods');
-addGodsBtn.addEventListener('click', () => {
-    overlay.classList.add('active');
-});
-
-const modal = document.querySelector('.modal');
-modal.addEventListener('click', e => {
-    console.log(e.target);
-    if (e.target.closest('.modal__close')) {
-        overlay.classList.remove('active');
+{
+    const createRow = (goodNumber, goodObject) => {
+        const element = `
+    <tr>
+        <td class="table__cell ">${goodNumber}</td>
+        <td class="table__cell table__cell_left table__cell_name" data-id="${goodObject.id}">
+            <span class="table__cell-id">id: ${goodObject.id}</span>${goodObject.name}</td>
+        <td class="table__cell table__cell_left">${goodObject.category}</td>
+        <td class="table__cell">${goodObject.units}</td>
+        <td class="table__cell">${goodObject.count}</td>
+        <td class="table__cell">${goodObject.price}</td>
+        <td class="table__cell">${goodObject.price * goodObject.count}</td>
+        <td class="table__cell table__cell_btn-wrapper">
+            <button class="table__btn table__btn_pic"></button>
+            <button class="table__btn table__btn_edit"></button>
+            <button class="table__btn table__btn_del"></button>
+        </td>
+    </tr>
+        `;
+        return element;
     }
-});
 
-renderGoods(goods);
-
-const btnDel = document.querySelectorAll('.table__btn_del');
-btnDel.forEach(del => {
-    del.addEventListener('click', e => {
-        const currentRow = del.closest('tr');
-        const id = currentRow.children[1].getAttribute('data-id');
-        goods = goods.filter(item => item.id != id);
-        currentRow.remove();
-        console.log(goods);
+    const closeModal = () => {
+        const overlay  = document.querySelector('.overlay');
+        overlay.classList.remove('active');
+    };
+    const closeButton = document.querySelector('.modal__close');
+    closeButton.addEventListener('click', () => {
+        closeModal();
     });
-});
+
+    const renderGoods = arrayGoods => {
+
+        document.querySelector('tbody').innerHTML = "";
+
+        const goods = arrayGoods;
+        let goodNumber = 0;
+
+        goods.forEach(goodObject => {
+            goodNumber++;
+            const element = createRow(goodNumber, goodObject);
+            addToBody(element);
+        });
+    }
+
+    const addToBody = element => {
+        const body =  document.querySelector('tbody');
+        body.insertAdjacentHTML('beforeend', element);
+    }
+
+    const addGodsBtn = document.querySelector('.panel__add-goods');
+    const vendorCode_Id = document.querySelector('.vendor-code__id');
+    addGodsBtn.addEventListener('click', () => {
+        const overlay  = document.querySelector('.overlay');
+        overlay.classList.add('active');           
+        const vendorCode = Math.round(Math.random() * (10 ** 14));
+        vendorCode_Id.textContent = vendorCode;
+    });
+
+    const computeTotalPriceOfGoods = goods => {
+        let totalPriceOfGoods = goods.reduce((total, item) => {
+            console.log(item.discont);
+            if (!Number.isNaN(item.discont)) {
+                return total + (item.price * item.count - item.discont);
+            }
+            else return total + (item.price * item.count);
+        }, 0);
+        const crmTotalPrice = document.querySelector('.crm__total-price');
+        crmTotalPrice.textContent = `$ ${totalPriceOfGoods}`;
+    };  
+
+    const tbody  = document.querySelector('tbody');
+    tbody.addEventListener('click', e => {
+        const target = e.target;
+
+        if (target.classList.contains('table__btn_del')) {
+            const parentTr = target.closest('tr');
+            const id = parentTr.children[1].getAttribute('data-id');
+            goods = goods.filter(item => item.id != id);
+            parentTr.remove();
+            computeTotalPriceOfGoods(goods);
+            renderGoods(goods);
+        }
+    });
+
+
+    const modalForm = document.querySelector('.modal__form');
+
+    modalForm.discount.addEventListener('change', e => {
+        if (e.target.checked) {
+            modalForm.discount_count.toggleAttribute('disabled');
+            modalForm.discount_count.value = '';
+        } else {
+            modalForm.discount_count.setAttribute('disabled', 'disabled');
+            modalForm.discount_count.value = '';
+        }
+        
+    });
+
+    modalForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const product = Object.fromEntries(formData);
+        console.log(product.discount_count);
+        if (typeof product.discount_count === 'undefined'){
+            product.discont = 0;
+        }
+                
+            else
+                product.discont = product.discount_count;
+
+        product.id = vendorCode_Id.textContent;
+        const newRow = createRow(goods.length + 1, product);
+        addToBody(newRow);
+        goods.push(product);
+        computeTotalPriceOfGoods(goods);
+        closeModal();
+    });
+
+        
+    const computeCurrentModalTotalPrice = () => {
+        if (!Number.isNaN(modalForm.count.value) && !Number.isNaN(modalForm.price.value)) {
+            let totalPrice = modalForm.count.value * modalForm.price.value;
+            if (!Number.isNaN(modalForm.discount_count.value))
+                totalPrice -= modalForm.discount_count.value;
+    
+            modalForm.total.textContent = totalPrice;
+        }
+    };
+
+    modalForm.count.addEventListener('change', computeCurrentModalTotalPrice);
+    modalForm.price.addEventListener('change', computeCurrentModalTotalPrice);
+    modalForm.discount_count.addEventListener('change', computeCurrentModalTotalPrice);    
+
+
+
+    const init = () => {
+        computeTotalPriceOfGoods(goods);
+        renderGoods(goods);
+    }
+    init();
+}
