@@ -1,4 +1,6 @@
-'use strict';
+import { computeTotalPriceOfGoods, renderGoods } from './modules/rendering.js';
+import * as pageElements from './modules/pageElements.js';
+import { createRow, addToBody } from './modules/addElementsToPage.js';
 
 let goods = [
     {
@@ -60,77 +62,25 @@ let goods = [
 ];
 
 {
-    const createRow = (goodNumber, goodObject) => {
-        const element = `
-    <tr>
-        <td class="table__cell ">${goodNumber}</td>
-        <td class="table__cell table__cell_left table__cell_name" data-id="${goodObject.id}">
-            <span class="table__cell-id">id: ${goodObject.id}</span>${goodObject.name}</td>
-        <td class="table__cell table__cell_left">${goodObject.category}</td>
-        <td class="table__cell">${goodObject.units}</td>
-        <td class="table__cell">${goodObject.count}</td>
-        <td class="table__cell">${goodObject.price}</td>
-        <td class="table__cell">${goodObject.price * goodObject.count}</td>
-        <td class="table__cell table__cell_btn-wrapper">
-            <button class="table__btn table__btn_pic"></button>
-            <button class="table__btn table__btn_edit"></button>
-            <button class="table__btn table__btn_del"></button>
-        </td>
-    </tr>
-        `;
-        return element;
-    }
+    const addButton = pageElements.addButtonElement;
+    addButton.addEventListener('click', () => {
+        const overlay = pageElements.overlayElement;
+        overlay.classList.add('active');
+        const vendorCode = Math.round(Math.random() * (10 ** 14));
+        pageElements.vendorCode_Id.textContent = vendorCode;
+    });
 
     const closeModal = () => {
-        const overlay  = document.querySelector('.overlay');
+        const overlay = pageElements.overlayElement;
         overlay.classList.remove('active');
     };
-    const closeButton = document.querySelector('.modal__close');
+
+    const closeButton = pageElements.modal__close;
     closeButton.addEventListener('click', () => {
         closeModal();
     });
 
-    const renderGoods = arrayGoods => {
-
-        document.querySelector('tbody').innerHTML = "";
-
-        const goods = arrayGoods;
-        let goodNumber = 0;
-
-        goods.forEach(goodObject => {
-            goodNumber++;
-            const element = createRow(goodNumber, goodObject);
-            addToBody(element);
-        });
-    }
-
-    const addToBody = element => {
-        const body =  document.querySelector('tbody');
-        body.insertAdjacentHTML('beforeend', element);
-    }
-
-    const addGodsBtn = document.querySelector('.panel__add-goods');
-    const vendorCode_Id = document.querySelector('.vendor-code__id');
-    addGodsBtn.addEventListener('click', () => {
-        const overlay  = document.querySelector('.overlay');
-        overlay.classList.add('active');           
-        const vendorCode = Math.round(Math.random() * (10 ** 14));
-        vendorCode_Id.textContent = vendorCode;
-    });
-
-    const computeTotalPriceOfGoods = goods => {
-        let totalPriceOfGoods = goods.reduce((total, item) => {
-            console.log(item.discont);
-            if (!Number.isNaN(item.discont)) {
-                return total + (item.price * item.count - item.discont);
-            }
-            else return total + (item.price * item.count);
-        }, 0);
-        const crmTotalPrice = document.querySelector('.crm__total-price');
-        crmTotalPrice.textContent = `$ ${totalPriceOfGoods}`;
-    };  
-
-    const tbody  = document.querySelector('tbody');
+    const tbody = pageElements.tbodyElement;
     tbody.addEventListener('click', e => {
         const target = e.target;
 
@@ -144,33 +94,17 @@ let goods = [
         }
     });
 
-
-    const modalForm = document.querySelector('.modal__form');
-
-    modalForm.discount.addEventListener('change', e => {
-        if (e.target.checked) {
-            modalForm.discount_count.toggleAttribute('disabled');
-            modalForm.discount_count.value = '';
-        } else {
-            modalForm.discount_count.setAttribute('disabled', 'disabled');
-            modalForm.discount_count.value = '';
-        }
-        
-    });
-
+    const modalForm = pageElements.modal__form;
     modalForm.addEventListener('submit', e => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const product = Object.fromEntries(formData);
-        console.log(product.discount_count);
-        if (typeof product.discount_count === 'undefined'){
+        if (typeof product.discont === 'undefined')
             product.discont = 0;
-        }
-                
-            else
-                product.discont = product.discount_count;
+        else
+            product.discont = product.discount_count;
 
-        product.id = vendorCode_Id.textContent;
+        product.id = pageElements.vendorCode_Id.textContent;
         const newRow = createRow(goods.length + 1, product);
         addToBody(newRow);
         goods.push(product);
@@ -178,7 +112,11 @@ let goods = [
         closeModal();
     });
 
-        
+    modalForm.discount.addEventListener('click', () => {
+        modalForm.discount_count.toggleAttribute("disabled");
+        modalForm.discount_count.value = '';
+    });
+
     const computeCurrentModalTotalPrice = () => {
         if (!Number.isNaN(modalForm.count.value) && !Number.isNaN(modalForm.price.value)) {
             let totalPrice = modalForm.count.value * modalForm.price.value;
@@ -191,13 +129,11 @@ let goods = [
 
     modalForm.count.addEventListener('change', computeCurrentModalTotalPrice);
     modalForm.price.addEventListener('change', computeCurrentModalTotalPrice);
-    modalForm.discount_count.addEventListener('change', computeCurrentModalTotalPrice);    
-
-
+    modalForm.discount_count.addEventListener('change', computeCurrentModalTotalPrice);
 
     const init = () => {
-        computeTotalPriceOfGoods(goods);
         renderGoods(goods);
+        computeTotalPriceOfGoods(goods);
     }
-    init();
+    window.initCRM = init;
 }
